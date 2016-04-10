@@ -18,13 +18,27 @@ function ae2manager.new(meInterface)
   return obj
 end
 
+function ae2manager:cleanup()
+  for _, itemConfig in pairs(self.config.items) do
+    if itemConfig.action == "craft" then
+      job = self.craftingJobs[self.itemId(itemConfig)]
+      if job then
+        job.cancel()
+      end
+    elseif itemConfig.action == "redstone" then
+      self:redstone(itemConfig, 0)
+    end
+  end
+  self:cancel()
+end
+
 function ae2manager:cancel()
   self.canceled = true
 end
 
 function ae2manager:craft(craftable, quantity)
   if self:isCrafting(itemStack) or
-     self.numCraftingJobs >= self.maxCraftingJobs then
+     self:numCraftingJobs() >= self.maxCraftingJobs then
     return nil
   end
   job = craftable.request(quantity)
@@ -32,12 +46,25 @@ function ae2manager:craft(craftable, quantity)
   return job
 end
 
+function ae2manager:redstone(itemConfig, signalStrength)
+  redstone = component.redstone
+  if itemConfig.address then
+    redstone = component.proxy(address)
+  end
+  local side = sides[itemConfig.side]
+  local color = colors[itemConfig.color]
+  redstone.setBundledOutput(side, color, signalStrength)
+end
+
+function ae2manager:run()
+  self.canceled = false
+  while not self.canceled do
+    self:processItems()
+  end
+end
+
 function ae2manager:processItems()
   for idx, itemConfig in pairs(self.config.items) do
-    if self.canceled then
-      self.canceled = false
-      break
-    end
     self:processItem(itemConfig)
     os.sleep(self.itemProcessDelay)
   end
@@ -124,13 +151,7 @@ function ae2actions.redstone(ae2manager, itemStack, itemConfig)
   if itemStack.size < itemConfig.minimum then
     signalStrength = 255
   end
-  redstone = component.redstone
-  if itemConfig.address then
-    redstone = component.proxy(address)
-  end
-  local side = sides[itemConfig.side]
-  local color = colors[itemConfig.color]
-  redstone.setBundledOutput(side, color, signalStrength)
+  ae2manager:redstone(itemConfig, signalStrength)
 end
 
 function newObject(template)
