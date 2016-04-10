@@ -1,0 +1,29 @@
+ae2manager = require("ae2manager")
+component = require("component")
+event = require("event")
+keyboard = require("keyboard")
+
+CONFIGURATION_PATH = "/home/ae2mgmt-config"
+
+ae2 = ae2manager.new()
+running = true
+
+function main()
+  event.listen("key_down", handleKeyDown)
+  local config = dofile(CONFIGURATION_PATH)
+  ae2:setConfiguration(config)
+  ae2:run()
+end
+
+function handleKeyDown(eventName, keyboardAddr, char, code, playerName)
+  if code == keyboard.keys.c and keyboard.isControlDown() then
+    handleInterrupt()
+    return false
+  end
+end
+
+function handleInterrupt()
+  ae2:cleanup()
+end
+
+main()
