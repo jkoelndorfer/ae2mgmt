@@ -20,12 +20,7 @@ end
 
 function ae2manager:cleanup()
   for _, itemConfig in pairs(self.config.items) do
-    if itemConfig.action == "craft" then
-      job = self.craftingJobs[self.itemId(itemConfig)]
-      if job then
-        job.cancel()
-      end
-    elseif itemConfig.action == "redstone" then
+    if itemConfig.action == "redstone" then
       self:redstone(itemConfig, 0)
     end
   end
@@ -142,7 +137,12 @@ function ae2actions.craft(ae2manager, itemStack, itemConfig)
     return nil
   end
   craftable = ae2manager:getCraftable(itemConfig)
-  quantity = itemConfig.quantity or (itemConfig.minimum - itemStack.size)
+  neededQuantity = itemConfig.minimum - itemStack.size
+  defaultQuantity = 64
+  if neededQuantity < defaultQuantity then
+    defaultQuantity = neededQuantity
+  end
+  quantity = itemConfig.quantity or defaultQuantity
   ae2manager:craft(craftable, quantity)
 end
 
