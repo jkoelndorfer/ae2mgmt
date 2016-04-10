@@ -1,0 +1,111 @@
+-- This is an example configuration file for ae2manager.
+--
+-- Configuration files are executed as regular Lua, and are
+-- expected to return a table containing configuration information.
+--
+-- Configuration parameters are as follows:
+--
+-- * maxCraftingJobs - The maximum number of crafting jobs that ae2manager
+--   will execute at one time. Defaults to 1.
+--
+-- * items - A table describing the items to keep stocked. Each entry is a
+--   table containing some filter parameters to select the item and some
+--   additional parameters to tell ae2manager how to act.
+--
+--
+-- Entries in the items table *must* have an "action" defined, and you will
+-- certainly want at least one filter parameter (name, label, or both will
+-- likely be most useful. You can use as many filter parameters as desired
+-- to select very specific items. Item entries must also have a "minimum"
+-- defined.
+--
+-- Filter parameters:
+--
+-- * name - The textual item ID for the item, as shown in NEI. Examples are
+-- "minecraft:planks" and "minecraft:stone".
+--
+-- * label - The display name for the item. Examples are "Oak Wood Planks" and
+-- "Stone".
+--
+-- * hasTag - Whether or not the item has an NBT tag. Must be true or false.
+--
+-- * damage - The damage value of the item. Must be an integer.
+--
+-- * maxDamage - The maximum damage value of the item. Must be an integer.
+--
+-- * size - The number of items available in the ME system. You probably don't
+--   want this parameter. Don't use it!
+--
+-- * maxSize - The maximum stack size of the item. Must be an integer.
+--
+-- For more information about filter parameters, see the OpenComputers GitHub
+-- page:
+-- https://github.com/MightyPirates/OpenComputers/blob/399e0f44e6e6088a8b95f011011d817cbec45177/src/main/scala/li/cil/oc/integration/appeng/NetworkControl.scala#L125
+--
+-- Action parameters:
+--
+-- * action - The name of the action to take. Valid values are "craft" and "redstone".
+--   An action also takes additional parameters specific to that action (see below).
+--   This parameter is required.
+--
+-- * minimum - Invokes action if the number of items in the ME system is less than this.
+--   Must be an integer. This parameter is required.
+--
+-- craft Action:
+-- The craft action uses AE2 autocrafting to keep the item above the specified minimum
+-- threshold. Parameters follow:
+--
+-- * quantity - The number of items to craft at one time. By default, items are crafted in
+--   small batches since crafting jobs can't be canceled by ae2manager once they are started.
+--   You may want to adjust this if your items craft very quickly or very slowly. It is valid
+--   to set this parameter higher than "minimum". Must be an integer.
+--
+-- redstone Action:
+-- The redstone action emits a redstone signal when the item falls below the minimum threshold.
+-- Parameters follow:
+--
+-- * address - The OpenComputers address of the redstone component to set a signal on.
+--   By default, selects the redstone component returned by `component.redstone`. If you only
+--   have one redstone cord or redstone I/O block connected to your computer, you don't need
+--   to specify this. If you have more than one, you should include this parameter.
+--   Example: bb5f3252-380b-4b12-8105-0dd68de12acd
+--
+-- * side - The side to emit the redstone signal on. Valid values are "north", "south", "east",
+--   "west", "top", and "bottom" (or see the `sides` module). This parameter is required.
+--
+-- * color - The color channel to emit the redstone signal on. See the `colors` module for
+--   valid values.
+
+
+-- I recommend declaring the config as "local".
+local config = {
+  maxCraftingJobs = 2,
+  items = {
+    -- Full example with all filter parameters (except `size`, but don't use `size`).
+    {
+      name      = "minecraft:planks",
+      label     = "Oak Wood Planks",
+      hasTag    = false,
+      damage    = 0,
+      maxDamage = 0,
+      maxSize   = 64,
+      action    = "craft",
+      minimum   = 5000,
+      quantity  = 1000
+    },
+    -- Something more practical with Nether Stars. You could get rid of either
+    -- name or label and this would still work. Doesn't hurt to be specific,
+    -- though!
+    {
+      name     = "minecraft:nether_star",
+      label    = "Nether Star",
+      action   = "redstone",
+      minimum  = 10000,
+      side     = "top",
+      color    = "white"
+    },
+  }
+}
+-- This return is REQUIRED!
+return config
+-- vim: shiftwidth=2 softtabstop=2 ft=lua
