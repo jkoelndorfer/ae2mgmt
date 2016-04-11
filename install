@@ -1,0 +1,16 @@
+local os = require("os")
+local shell = require("shell")
+
+local args = shell.parse(...)
+target = args[1]
+if not target then
+    print("You must specify a destination")
+    os.exit(1)
+end
+
+os.execute("mkdir -p " .. target .. "/lib")
+os.execute("yes | cp -rf lib/ae2manager "  .. target .. "/lib")
+os.execute("yes | cp -rf lib/log " .. target .. "/lib")
+os.execute("yes | cp ae2mgmt-config.example " .. target)
+os.execute("yes | cp ae2mgmt " .. target)
+os.execute("yes | cp install " .. target)
