@@ -68,6 +68,16 @@ function ae2manager:run()
   end
 end
 
+function ae2manager:hasItems(itemConfigs)
+  for idx, config in pairs(itemConfigs) do
+    local itemStack = self:getItemStack(config)
+    if itemStack.size < config.minimum then
+      return false
+    end
+  end
+  return true
+end
+
 function ae2manager:processItems()
   for idx, itemConfig in pairs(self.config.items) do
     self:processItem(itemConfig)
@@ -81,7 +91,11 @@ function ae2manager:processItem(itemConfig)
 end
 
 function ae2manager:getItemStack(filter)
-  result = self.ae2.getItemsInNetwork(filter)
+  local result = self.ae2.getItemsInNetwork(filter)
+  if result["n"] == 0 then
+    -- TODO: Copy filter into this returned value
+    return {size = 0}
+  end
   return result[1]
 end
 
@@ -146,8 +160,14 @@ function ae2actions.new()
   return newObject(ae2actions)
 end
 
+function ae2actions.doProduceItems(ae2, itemStack, itemConfig)
+  needItems = itemConfig.minimum > itemStack.size
+  prereqMet = (itemConfig.ifHasItems == nil) or ae2:hasItems(itemConfig.ifHasItems)
+  return (needItems and prereqMet)
+end
+
 function ae2actions.craft(ae2, itemStack, itemConfig)
-  if itemStack.size > itemConfig.minimum then
+  if not ae2actions.doProduceItems(ae2, itemStack, itemConfig) then
     return nil
   end
   craftable = ae2:getCraftable(itemConfig)
