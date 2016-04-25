@@ -2,6 +2,7 @@ ae2manager = require("ae2manager")
 component = require("component")
 event = require("event")
 keyboard = require("keyboard")
+term = require("term")
 
 CONFIGURATION_PATH = "/home/ae2mgmt-config"
 
@@ -9,6 +10,8 @@ ae2 = ae2manager.new()
 running = true
 
 function main()
+  term.clear()
+  print("Monitoring AE2 network")
   event.listen("key_down", handleKeyDown)
   local config = dofile(CONFIGURATION_PATH)
   ae2:setConfiguration(config)
