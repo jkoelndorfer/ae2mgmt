@@ -1,5 +1,6 @@
 local colors = require("colors")
 local component = require("component")
+local log = require("log")
 local os = require("os")
 local sides = require("sides")
 
@@ -15,7 +16,15 @@ function ae2manager.new(meInterface)
   obj.craftingJobs = {}
   obj.maxCraftingJobs = 1
   obj.config = {}
+  obj.logger = log.new()
   return obj
+end
+
+-- Sometimes AE2 goes offline, or the computer loses its connection and can't
+-- communicate with the network. This function checks to see if AE2 is
+-- available.
+function ae2manager:ae2Available()
+  return (self.ae2.getMaxStoredPower() > 0)
 end
 
 function ae2manager:cleanup()
@@ -32,12 +41,13 @@ function ae2manager:cancel()
 end
 
 function ae2manager:craft(craftable, quantity)
+  local itemStack = craftable.getItemStack()
   if self:isCrafting(itemStack) or
      self:numCraftingJobs() >= self.maxCraftingJobs then
     return nil
   end
   job = craftable.request(quantity)
-  self:addCraftingJob(craftable.getItemStack(), job)
+  self:addCraftingJob(itemStack, job)
   return job
 end
 
@@ -120,6 +130,10 @@ function ae2manager:numCraftingJobs()
   return numJobs
 end
 
+function ae2manager.itemDisplayName(itemStack)
+  return (itemStack.label or itemStack.name or "?")
+end
+
 function ae2manager.itemId(itemStack)
   return (itemStack.name .. "/" .. itemStack.label)
 end
@@ -132,26 +146,33 @@ function ae2actions.new()
   return newObject(ae2actions)
 end
 
-function ae2actions.craft(ae2manager, itemStack, itemConfig)
+function ae2actions.craft(ae2, itemStack, itemConfig)
   if itemStack.size > itemConfig.minimum then
     return nil
   end
-  craftable = ae2manager:getCraftable(itemConfig)
+  craftable = ae2:getCraftable(itemConfig)
+  if not craftable then
+    if ae2:ae2Available() then
+      itemDisplayName = ae2.itemDisplayName(itemConfig)
+      ae2.logger:warn("Can't get craftable for " .. itemDisplayName)
+    end
+    return nil
+  end
   neededQuantity = itemConfig.minimum - itemStack.size
   defaultQuantity = 64
   if neededQuantity < defaultQuantity then
     defaultQuantity = neededQuantity
   end
   quantity = itemConfig.quantity or defaultQuantity
-  ae2manager:craft(craftable, quantity)
+  ae2:craft(craftable, quantity)
 end
 
-function ae2actions.redstone(ae2manager, itemStack, itemConfig)
+function ae2actions.redstone(ae2, itemStack, itemConfig)
   local signalStrength = 0
   if itemStack.size < itemConfig.minimum then
     signalStrength = 255
   end
-  ae2manager:redstone(itemConfig, signalStrength)
+  ae2:redstone(itemConfig, signalStrength)
 end
 
 function newObject(template)
