@@ -46,13 +46,13 @@ function ae2manager:craft(craftable, quantity)
      self:numCraftingJobs() >= self.maxCraftingJobs then
     return nil
   end
-  job = craftable.request(quantity)
+  local job = craftable.request(quantity)
   self:addCraftingJob(itemStack, job)
   return job
 end
 
 function ae2manager:redstone(itemConfig, signalStrength)
-  redstone = component.redstone
+  local redstone = component.redstone
   if itemConfig.address then
     redstone = component.proxy(address)
   end
@@ -86,7 +86,7 @@ function ae2manager:processItems()
 end
 
 function ae2manager:processItem(itemConfig)
-  itemStack = (self:getItemStack(itemConfig) or {size = 0})
+  local itemStack = self:getItemStack(itemConfig)
   self.actions[itemConfig.action](self, itemStack, itemConfig)
 end
 
@@ -100,7 +100,7 @@ function ae2manager:getItemStack(filter)
 end
 
 function ae2manager:getCraftable(filter)
-  result = self.ae2.getCraftables(filter)
+  local result = self.ae2.getCraftables(filter)
   return result[1]
 end
 
@@ -123,8 +123,8 @@ function ae2manager:addCraftingJob(item, job)
 end
 
 function ae2manager:isCrafting(item)
-  id = self.itemId(item)
-  job = self.craftingJobs[id]
+  local id = self.itemId(item)
+  local job = self.craftingJobs[id]
   if job and not self.craftingJobDone(job) then
     return true
   else
@@ -133,7 +133,7 @@ function ae2manager:isCrafting(item)
 end
 
 function ae2manager:numCraftingJobs()
-  numJobs = 0
+  local numJobs = 0
   for idx, job in pairs(self.craftingJobs) do
     if self.craftingJobDone(job) then
       self.craftingJobs[idx] = nil
@@ -161,8 +161,8 @@ function ae2actions.new()
 end
 
 function ae2actions.doProduceItems(ae2, itemStack, itemConfig)
-  needItems = itemConfig.minimum > itemStack.size
-  prereqMet = (itemConfig.ifHasItems == nil) or ae2:hasItems(itemConfig.ifHasItems)
+  local needItems = itemConfig.minimum > itemStack.size
+  local prereqMet = (itemConfig.ifHasItems == nil) or ae2:hasItems(itemConfig.ifHasItems)
   return (needItems and prereqMet)
 end
 
@@ -170,20 +170,20 @@ function ae2actions.craft(ae2, itemStack, itemConfig)
   if not ae2actions.doProduceItems(ae2, itemStack, itemConfig) then
     return nil
   end
-  craftable = ae2:getCraftable(itemConfig)
+  local craftable = ae2:getCraftable(itemConfig)
   if not craftable then
     if ae2:ae2Available() then
-      itemDisplayName = ae2.itemDisplayName(itemConfig)
+      local itemDisplayName = ae2.itemDisplayName(itemConfig)
       ae2.logger:warn("Can't get craftable for " .. itemDisplayName)
     end
     return nil
   end
-  neededQuantity = itemConfig.minimum - itemStack.size
-  defaultQuantity = 64
+  local neededQuantity = itemConfig.minimum - itemStack.size
+  local defaultQuantity = 64
   if neededQuantity < defaultQuantity then
     defaultQuantity = neededQuantity
   end
-  quantity = itemConfig.quantity or defaultQuantity
+  local quantity = itemConfig.quantity or defaultQuantity
   ae2:craft(craftable, quantity)
 end
 
